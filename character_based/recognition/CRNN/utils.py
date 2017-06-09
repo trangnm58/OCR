@@ -1,7 +1,5 @@
 from __future__ import division, print_function, unicode_literals
 import time
-import cv2
-import cairocffi as cairo
 
 
 class Timer:
