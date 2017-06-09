@@ -1,0 +1,70 @@
+Model test cases
+
+1. Test RNN language model
+(train on vie dataset but test on raw dataset)
+Labled character in vie dataset: A, D, I, Y, d, i, y
+
+test1: 'bờm', 'bớt', 'bulông', 'bục', 'buộc', 'business', 'bướng', 'huấn', 'luyện', 'ngoách', 'ngoặc', 'ngoảnh', 'nghiêng', 'ngoằng', 'nguệch', 'ngưởng', 'nhách', 'HANG', 'MAI', 'Chieu', 'Khuynh', 'Huong', 'Hoang', 'thoai', 'Quynh', 'khuyen', 'nguong', 'duoc', 'mat'
+
+test2: 'trAng', 'chuyEN', 'sAng'
+
+	m0d1:
+	- bom bớt bưlong buc bụớc búsiness bứống hụan lụyển ngoach ngôảc ngóảnh nghieng ngờặng ngùệch ngụớng nhắch HANG MAI Chiêu Khúynh Hứỗng Hốang thớài Quynh khưyện nguống duoc mát
+
+	m1d1:
+	- bồm bổt bủlống bùc bùốc bùsiness bượng hưan lưyễn ngoach ngớac ngoanh nghiếng ngơãng nguếch ngủơng nhăch HANG MAI Chiếu Khuynh Hụống Hoang thoai Quynh khuyễn ngùỗng dúốc mat
+
+Note: CNN has the major influence => Try bidirectional GRU
+	
+	m2d1: 2xGRUx256 - concat
+	- bởm bợt bulơng bức buộc business buồng huắn luyễn ngoach ngoạc ngoanh nghiêng ngoẵng nguệch ngượng nhạch HANG MAI Chiêu Khuynh Huộng Hoang thoai Quynh khuyễn nguỗng duớc mat
+
+	- bỗm bớt bùlong búc buốc business buồng huan luyển ngoạch ngoặc ngoanh nghiệng ngoang nguếch nguỗng nhách HANG MAI Chiếu Khuynh Hưống Hoằng thoại Quynh khuyển ngưõng duốc mặt
+
+	m3d1: (bigger GRU) 2xGRUx512 - concat
+	- bơm bớt bulơng bục buộc business buống huan luyễn ngoàch ngoắc ngoạnh nghiếng ngoặng nguếch ngượng nhach HANG MAI Chiệu Khuynh Huơng Hoang thoai Quynh khuyến nguổng dước mật
+
+	- bỏm bốt bulơng bực buôc business buộng huẳn luyễn ngoach ngoạc ngoanh nghiêng ngoăng nguếch ngượng nhách HANG MÃI Chiễu Khuynh Huỡng Hoằng thoải Quynh khuyền nguỡng dược mat
+
+	- trAng chUyỀN SAng
+
+	m4d1: 2xGRUx512 - add
+	- bớm bốt bulông bức bưộc business buống huan luyễn ngoách ngoac ngoanh nghiễng ngoang nguệch nguỡng nhách HANG MAI Chiếu Khuynh Huộng Hoang thoai Quynh khuyển nguông duốc mắt
+
+	- bổm bớt bulong búc bước business buống huắn luyển ngoach ngoác ngoạnh nghiêng ngoặng nguệch ngường nhạch HANG MAI Chiểu Khuynh Hướng Hoàng thoai Quynh khuyễn ngướng dước mat
+
+	- trAng chuyỄN sĂng
+
+
+2. Test with real data
+binh cap chao chuyen day giay hai hang khach lanh ly mai phap quy tam trang trung trung1 vi xuan
+
+	Bình CẤP CHÀO Chuyên DÂY GIÀY HẢI HÀNG KHÁCH lạnh LÝ MAI PHÁP QUÝ TÂM TRANG TRUNG TRUNG1 VÍ XUÂN
+
+	m0d1:
+	BInh ciP CHÂO Chuyến DĂY oIAY HĂL HĂNG KHĂCH lẹnh LÝ LAL PHẪP OUÝ TAm TRAnG TRỪnG TRƯNG Vi XUÂN 
+
+	m1d1:
+	Blnh cẶP CHAO chùyền DẶY clAY HĂI HẦNG KHÁCH lanh LÝ UAL PHÂP QUÝ TẬm TRAOG TRUnG TRUNG VI XUẬN
+
+---
+	m2d1:
+	BInh CịP CHÀO chuyền DAY GIÀY HỊI HẰNG KHÁCH lẠnh LÝ UẶP PHẬP QUÝ TẬm TRAnG TRỨnG TRUNG Vi XUÂN
+
+	m3d1:
+	BInh cẪP CHÀO chuyễn DÃY ỎIÀY HÀI HĂNG KHÁCH lanh LÝ LAI PHẤP QUÝ TẬm TRAOG TRỪnG TRUNG Vi XUÂN
+
+	m4d1:
+	BInh CII CHAO Chuyen DÂY ÔIẶY HÀI HẰNG KHẢCH lánh LỲ MẶI PHÁP QUÝ TẬm TRANG TRunG TRỪNG Vi XUÂN
+
+Note: Not good, Overfitting, data incomplete, number of samples per word too small (3)
+
+Explane:
+
+BInh: not enough 'ì'
+
+CII: not enough 'Ấ'
+
+TẬm: there is an 'Ậ' in dataset that looks more like 'Â' in picture than all 'Â' in dataset
+
+TRỪNG: 'U' and 'Ừ' are the same in the dataset (haven't been labeled)
