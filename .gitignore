@@ -111,6 +111,9 @@ character_based/recognition/CRNN/test_images/
 # Output files
 character_based/recognition/CRNN/output.txt
 
+# Bsub files
+*.bsub
+
 # Unresolved
 AttentionBased/
 IDOCR/
