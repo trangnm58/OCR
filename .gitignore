@@ -110,6 +110,8 @@ character_based/recognition/CRNN/data/chars74k_img_good_full_vie_raw/
 character_based/recognition/CRNN/data/chars74k_img_good_sample_vie/
 character_based/recognition/CRNN/test_images/
 
+word_based/recognition/CRNN/pickle_data/*
+
 # Output files
 character_based/recognition/CRNN/output.txt
 
