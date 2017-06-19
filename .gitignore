@@ -100,6 +100,8 @@ ENV/
 # mypy
 .mypy_cache/
 
+# idea
+.idea/
 
 # Large files in the projects
 dataset/
