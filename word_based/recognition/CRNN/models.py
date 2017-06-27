@@ -9,9 +9,8 @@ from keras.layers.recurrent import GRU
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.wrappers import Bidirectional
 
-import model_handler
 from utils import Timer
-from dataset import Dataset, l_prime_len
+from dataset import (Dataset, MJSynthDataGenerator, get_inputs_outputs)
 from constants import *
 
 seed = 13
@@ -19,8 +18,7 @@ np.random.seed(seed)
 
 DATA_NAME = DATA_NAMES[0]
 MAP_NAME = MAP_NAMES[0]
-MODEL = MODEL_NAMES[0]
-WEIGHT_NAME = WEIGHT_NAMES[0]
+WEIGHT_NAME = WEIGHT_NAMES[1]
 
 
 class NN:
@@ -29,14 +27,24 @@ class NN:
         self.X_train, self.Y_train = d.get_train_dataset()
         self.X_val, self.Y_val = d.get_val_dataset()
 
-    def train(self, epochs):
+        self.X_train, self.Y_train = get_inputs_outputs(self.X_train, self.Y_train)
+        self.X_val, self.Y_val = get_inputs_outputs(self.X_val, self.Y_val)
+
+    def train(self, epochs, generator=None):
         initial_epoch = 0
         while True:
-            self.model.fit(self.X_train, self.Y_train,
-                           batch_size=self.batch_size,
-                           epochs=epochs,
-                           initial_epoch=initial_epoch,
-                           validation_data=(self.X_val, self.Y_val))
+            if not generator:
+                self.model.fit(self.X_train, self.Y_train,
+                               batch_size=self.batch_size,
+                               epochs=epochs,
+                               initial_epoch=initial_epoch,
+                               validation_data=(self.X_val, self.Y_val))
+            else:
+                self.model.fit_generator(
+                    generator=generator.next_train(), validation_data=generator.next_val(),
+                    callbacks=[generator], steps_per_epoch=generator.steps_per_epoch,
+                    validation_steps=generator.validation_steps,
+                    initial_epoch=initial_epoch, epochs=epochs)
 
             if IS_SERVER:
                 break
@@ -50,20 +58,13 @@ class NN:
 
     def save_model(self):
         if IS_SERVER:
-            model_handler.save_model(self.model, self.model_name)
-            model_handler.save_weights(self.model, self.weight_name)
+            self.model.save_weights(self.weight_name + ".h5")
         else:
-            name = input("Save model? [Y/n]:  ")
-            if not name:
-                model_handler.save_model(self.model, self.model_name)
-            elif name != 'n':
-                model_handler.save_model(self.model, TRAINED_MODELS + name)
-
             name = input("Save weights? [Y/n]: ")
             if not name:
-                model_handler.save_weights(self.model, self.weight_name)
+                self.model.save_weights(self.weight_name + ".h5")
             elif name != 'n':
-                model_handler.save_weights(self.model, TRAINED_MODELS + name)
+                self.model.save_weights(TRAINED_MODELS + name + ".h5")
 
 
 class CRNN(NN):
@@ -72,14 +73,13 @@ class CRNN(NN):
         self.batch_size = 128
         self.data_name = DATA_NAME
         self.idx_map = MAP_NAME
-        self.model_name = MODEL
         self.weight_name = WEIGHT_NAME
 
         self.height = HEIGHT
         self.width = WIDTH
-        self.word_length = l_prime_len(MAX_WORD_LENGTH)
+        self.word_length = MAX_WORD_LENGTH
         self.output_size = OUTPUT_SIZE
-        self.input_length = 46
+        self.input_length = INPUT_LENGTH
 
         self.test_func = None
 
@@ -89,22 +89,7 @@ class CRNN(NN):
         y_pred = y_pred[:, 2:, :]
         return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
 
-    def get_inputs_outputs(self, X, Y):
-        size = X.shape[0]
-        the_input = X
-        the_labels = Y
-        input_length = np.ones((size, 1), dtype='int64') * self.input_length
-        label_length = l_prime_len((Y > 0).sum(axis=1))
-        inputs = {
-            'the_input': the_input,
-            'the_labels': the_labels,
-            'input_length': input_length,
-            'label_length': label_length
-        }
-        outputs = {'ctc': np.zeros([size])}
-        return inputs, outputs
-
-    def build(self):
+    def build(self, dropout=True):
         input_data = Input(name='the_input', shape=(self.height, self.width, 1), dtype='float32')
 
         inner = Conv2D(filters=32,
@@ -131,11 +116,11 @@ class CRNN(NN):
         inner = Dense(units=512, activation='relu', name='dense1')(inner)
 
         inner = Bidirectional(GRU(units=512, return_sequences=True,
-                                  activation='relu', dropout=0.5),
+                                  activation='relu', dropout=0.5 if dropout else 0.0),
                               merge_mode='sum')(inner)
 
         inner = Bidirectional(GRU(units=512, return_sequences=True,
-                                  activation='relu', dropout=0.5),
+                                  activation='relu', dropout=0.5 if dropout else 0.0),
                               merge_mode='sum')(inner)
 
         inner = Dense(self.output_size, name='dense2')(inner)
@@ -158,14 +143,13 @@ class CRNN(NN):
 
         self.test_func = K.function([input_data], [y_pred])
 
-    def run(self, build=True):
+    def run(self, epochs, generator=None, load_data=True, build=True):
         timer = Timer()
 
-        timer.start("Loading data")
-        self.load_data()
-        self.X_train, self.Y_train = self.get_inputs_outputs(self.X_train, self.Y_train)
-        self.X_val, self.Y_val = self.get_inputs_outputs(self.X_val, self.Y_val)
-        timer.stop()
+        if load_data:
+            timer.start("Loading data")
+            self.load_data()
+            timer.stop()
 
         if build:
             timer.start("Building model...")
@@ -173,7 +157,7 @@ class CRNN(NN):
             timer.stop()
 
         timer.start("Training model...")
-        self.train(10)
+        self.train(epochs, generator)
         timer.stop()
 
         self.save_model()
@@ -181,9 +165,5 @@ class CRNN(NN):
 
 if __name__ == "__main__":
     m = CRNN()
-
-    # m.model = model_handler.load_model(MODEL_NAME)
-    # model_handler.compile_model(m.model)
-    # m.run(build=False)
-
-    m.run()
+    generator = MJSynthDataGenerator(m.batch_size)
+    m.run(1, generator=generator, load_data=False)
