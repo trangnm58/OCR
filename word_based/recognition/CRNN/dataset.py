@@ -138,9 +138,9 @@ class MJSynthDataGenerator(keras.callbacks.Callback):
         self.cur_val_idx = 0
 
         with open(self.data_folder + "annotation_train.txt") as f:
-            train_list = [line.split(" ")[0] for line in f.read().split("\n")]
+            train_list = [line.split(" ")[0] for line in f.read().strip().split("\n")]
         with open(self.data_folder + "annotation_val.txt") as f:
-            val_list = [line.split(" ")[0] for line in f.read().split("\n")]
+            val_list = [line.split(" ")[0] for line in f.read().strip().split("\n")]
 
         self.train_data = np.array(train_list)
         self.val_data = np.array(val_list)
