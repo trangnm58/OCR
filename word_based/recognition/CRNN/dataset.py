@@ -162,6 +162,8 @@ class MJSynthDataGenerator(keras.callbacks.Callback):
             img_src = self.data_folder + data_src[index + i]
 
             img = cv2.imread(img_src, cv2.IMREAD_GRAYSCALE)
+            if img is None:  # some images are broken
+                continue
             img = cv2.resize(img, (WIDTH, HEIGHT), interpolation=cv2.INTER_CUBIC) / 255.0
 
             X[i] = img
