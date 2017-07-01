@@ -121,3 +121,4 @@ character_based/recognition/CRNN/output.txt
 # Unresolved
 AttentionBased/
 IDOCR/
+idrec/

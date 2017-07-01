@@ -149,8 +149,8 @@ class MJSynthDataGenerator(keras.callbacks.Callback):
         self.validation_steps = self.val_data.shape[0] // self.batch_size
 
     def get_batch(self, index, size, src_type):
-        X = np.zeros((size, HEIGHT, WIDTH), dtype='float32')
-        Y = np.ones((size, MAX_WORD_LENGTH), dtype='int') * 62
+        X = np.zeros((0, HEIGHT, WIDTH), dtype='float32')
+        Y = np.ones((0, MAX_WORD_LENGTH), dtype='int')
 
         if src_type == 0:
             data_src = self.train_data
@@ -165,9 +165,10 @@ class MJSynthDataGenerator(keras.callbacks.Callback):
             if img is None:  # some images are broken
                 continue
             img = cv2.resize(img, (WIDTH, HEIGHT), interpolation=cv2.INTER_CUBIC) / 255.0
-
-            X[i] = img
-            Y[i, 0:len(label)] = text_to_labels(label)
+            X = np.vstack((X, [img]))
+            temp = np.ones(MAX_WORD_LENGTH, dtype='int') * 62
+            temp[0:len(label)] = text_to_labels(label)
+            Y = np.vstack((Y, [temp]))
 
         X = X.reshape(X.shape[0], HEIGHT, WIDTH, 1)
         return get_inputs_outputs(X, Y)
