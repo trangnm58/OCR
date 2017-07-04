@@ -53,7 +53,7 @@ class CRNNRecognizer:
 if __name__ == "__main__":
     DATA_NAME = DATA_NAMES[0]
     MAP_NAME = MAP_NAMES[0]
-    WEIGHT_NAME = WEIGHT_NAMES[0]
+    WEIGHT_NAME = WEIGHT_NAMES[1]
 
     m = CRNNRecognizer()
     X = m.get_X_test(150, 160)

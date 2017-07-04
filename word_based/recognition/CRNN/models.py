@@ -166,4 +166,4 @@ class CRNN(NN):
 if __name__ == "__main__":
     m = CRNN()
     generator = MJSynthDataGenerator(m.batch_size)
-    m.run(1, generator=generator, load_data=False)
+    m.run(2, generator=generator, load_data=False)
