@@ -66,6 +66,28 @@ class NN:
             elif name != 'n':
                 self.model.save_weights(TRAINED_MODELS + name + ".h5")
 
+    def run(self, epochs, generator=None, load_data=True, build=True, load_weight=False):
+        timer = Timer()
+
+        if load_data:
+            timer.start("Loading data")
+            self.load_data()
+            timer.stop()
+
+        if build:
+            timer.start("Building model...")
+            self.build()
+            timer.stop()
+
+        if load_weight:
+            self.model.load_weights(WEIGHT_NAME + ".h5")
+
+        timer.start("Training model...")
+        self.train(epochs, generator)
+        timer.stop()
+
+        self.save_model()
+
 
 class CRNN(NN):
     def __init__(self):
@@ -143,27 +165,11 @@ class CRNN(NN):
 
         self.test_func = K.function([input_data], [y_pred])
 
-    def run(self, epochs, generator=None, load_data=True, build=True):
-        timer = Timer()
-
-        if load_data:
-            timer.start("Loading data")
-            self.load_data()
-            timer.stop()
-
-        if build:
-            timer.start("Building model...")
-            self.build()
-            timer.stop()
-
-        timer.start("Training model...")
-        self.train(epochs, generator)
-        timer.stop()
-
-        self.save_model()
-
 
 if __name__ == "__main__":
     m = CRNN()
     generator = MJSynthDataGenerator(m.batch_size)
-    m.run(2, generator=generator, load_data=False)
+    m.run(10, generator=generator, load_data=False)
+
+    # continue training
+    # m.run(10, generator=generator, load_data=False, load_weight=True)

@@ -148,8 +148,8 @@ class MJSynthDataGenerator(keras.callbacks.Callback):
         # self.steps_per_epoch = self.train_data.shape[0] // self.batch_size
         # self.validation_steps = self.val_data.shape[0] // self.batch_size
 
-        self.steps_per_epoch = self.batch_size * 50
-        self.validation_steps = self.batch_size * 50
+        self.steps_per_epoch = 10000
+        self.validation_steps = 6000
 
     def get_batch(self, index, size, src_type):
         X = np.zeros((0, HEIGHT, WIDTH), dtype='float32')
@@ -180,8 +180,6 @@ class MJSynthDataGenerator(keras.callbacks.Callback):
         while True:
             ret = self.get_batch(self.cur_train_idx, self.batch_size, src_type=0)
             self.cur_train_idx += self.batch_size
-            if self.cur_train_idx >= self.train_data.shape[0]:
-                self.cur_train_idx = self.cur_train_idx % self.batch_size
 
             yield ret
 
@@ -189,8 +187,6 @@ class MJSynthDataGenerator(keras.callbacks.Callback):
         while True:
             ret = self.get_batch(self.cur_val_idx, self.batch_size, src_type=1)
             self.cur_val_idx += self.batch_size
-            if self.cur_val_idx >= self.val_data.shape[0]:
-                self.cur_val_idx = self.cur_val_idx % self.batch_size
 
             yield ret
 
